@@ -2,25 +2,132 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #111827; /* gray-900 — đậm, rõ trên mọi thiết bị */
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-open-sans);
 }
 
+/* App nội bộ: tắt dark mode để tránh text bị mờ trên điện thoại */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #ffffff;
+    --foreground: #111827;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-open-sans), 'Open Sans', sans-serif;
+}
+
+
+/* ── Form inputs: force legible colors on all browsers/mobile ── */
+input,
+textarea,
+select {
+  color: #111827;           /* gray-900 */
+  -webkit-text-fill-color: #111827;   /* iOS Safari override */
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #9ca3af;           /* gray-400 */
+  -webkit-text-fill-color: #9ca3af;
+  opacity: 1;               /* Firefox default opacity */
+}
+
+/* Prevent iOS auto-zoom on focus (input font-size < 16px) */
+@media (max-width: 768px) {
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+}
+
+/* ── Mobile: iOS safe-area bottom padding for bottom nav ── */
+.safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* ── Print styles ─────────────────────────────────── */
+@media print {
+  /* Ẩn toàn bộ layout shell */
+  aside,
+  header,
+  nav,
+  [data-print="hide"],
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Reset layout: bỏ flex/overflow của dashboard shell */
+  body,
+  html {
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff !important;
+    color: #000 !important;
+    font-size: 13px !important;
+  }
+
+  /* Container ngoài cùng: trải phẳng */
+  .flex.h-screen {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Vùng main content */
+  main {
+    display: block !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  /* Chỉ hiện khu vực được đánh dấu print-area */
+  .print-area {
+    display: block !important;
+  }
+
+  /* Ẩn tất cả anh em của print-area */
+  .print-area ~ *,
+  * + .print-area ~ * {
+    display: none !important;
+  }
+
+  /* Card / box không cần shadow khi in */
+  .shadow,
+  .shadow-sm,
+  .shadow-md,
+  .shadow-lg,
+  .shadow-xl,
+  .shadow-2xl,
+  .rounded-2xl,
+  .rounded-xl {
+    box-shadow: none !important;
+  }
+
+  /* Màu sắc giữ nguyên khi in */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Không phân trang giữa row */
+  tr, .print-no-break {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Header trang in */
+  .print-header {
+    display: block !important;
+    text-align: center;
+    margin-bottom: 16px;
+  }
 }

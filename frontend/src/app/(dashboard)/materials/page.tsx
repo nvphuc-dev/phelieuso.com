@@ -9,17 +9,16 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { Plus, Pencil, Trash2, X, Check } from 'lucide-react';
 import ConfirmModal from '@/components/ui/ConfirmModal';
+import { extractApiError } from '@/lib/text';
 
 function MaterialForm({
-  initial,
-  onSave,
-  onCancel,
-  loading,
+  initial, onSave, onCancel, loading, apiError,
 }: {
   initial?: Partial<Material>;
   onSave: (data: Partial<Material>) => void;
   onCancel: () => void;
   loading?: boolean;
+  apiError?: string | null;
 }) {
   const [form, setForm] = useState({
     name: initial?.name ?? '',
@@ -33,13 +32,16 @@ function MaterialForm({
 
   return (
     <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 space-y-3">
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
         <Input label="Tên vật liệu" value={form.name} onChange={set('name')} required />
         <Input label="Đơn vị" value={form.unit} onChange={set('unit')} placeholder="kg" />
         <Input label="Giá mua mặc định" type="number" value={form.default_purchase_price as string} onChange={set('default_purchase_price')} />
         <Input label="Giá bán mặc định" type="number" value={form.default_sale_price as string} onChange={set('default_sale_price')} />
-        <Input label="Mô tả" value={form.description} onChange={set('description')} className="col-span-2" />
+        <Input label="Mô tả" value={form.description} onChange={set('description')} className="sm:col-span-2 md:col-span-2" />
       </div>
+      {apiError && (
+        <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{apiError}</p>
+      )}
       <div className="flex gap-2 justify-end">
         <Button variant="secondary" size="sm" onClick={onCancel} type="button"><X size={14} /> Huỷ</Button>
         <Button size="sm" loading={loading} onClick={() => onSave({
@@ -62,6 +64,8 @@ export default function MaterialsPage() {
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<Material | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Material | null>(null);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [editError, setEditError] = useState<string | null>(null);
 
   const { data = [], isLoading } = useQuery({
     queryKey: ['materials'],
@@ -70,25 +74,24 @@ export default function MaterialsPage() {
 
   const createMutation = useMutation({
     mutationFn: materialService.create,
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['materials'] }); setCreating(false); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['materials'] }); setCreating(false); setCreateError(null); },
+    onError: (err) => setCreateError(extractApiError(err)),
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<Material> }) =>
       materialService.update(id, data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['materials'] }); setEditing(null); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['materials'] }); setEditing(null); setEditError(null); },
+    onError: (err) => setEditError(extractApiError(err)),
   });
 
   const deleteMutation = useMutation({
     mutationFn: materialService.delete,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['materials'] });
-      setDeleteTarget(null);
-    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['materials'] }); setDeleteTarget(null); },
   });
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <ConfirmModal
         open={deleteTarget !== null}
         title="Xoá vật liệu?"
@@ -101,7 +104,7 @@ export default function MaterialsPage() {
       />
 
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Vật liệu</h1>
+        <h1 className="text-xl md:text-2xl font-bold text-gray-900">Vật liệu</h1>
         <Button onClick={() => setCreating(true)} size="sm">
           <Plus size={16} /> Thêm mới
         </Button>
@@ -110,62 +113,105 @@ export default function MaterialsPage() {
       {creating && (
         <MaterialForm
           onSave={(d) => createMutation.mutate(d as Partial<Material>)}
-          onCancel={() => setCreating(false)}
+          onCancel={() => { setCreating(false); setCreateError(null); }}
           loading={createMutation.isPending}
+          apiError={createError}
         />
       )}
 
       <Card>
         {isLoading ? (
-          <p className="text-gray-500 text-sm">Đang tải...</p>
+          <p className="text-gray-500 text-sm py-4 text-center">Đang tải...</p>
         ) : data.length === 0 ? (
-          <p className="text-gray-500 text-sm">Chưa có vật liệu nào.</p>
+          <p className="text-gray-500 text-sm py-4 text-center">Chưa có vật liệu nào.</p>
         ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b text-gray-500">
-                <th className="text-left py-2 pr-4">Tên</th>
-                <th className="text-left py-2 pr-4">Đơn vị</th>
-                <th className="text-left py-2 pr-4">Giá mua</th>
-                <th className="text-left py-2 pr-4">Giá bán</th>
-                <th className="text-right py-2">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
+          <>
+            {/* ── Desktop table ── */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b text-gray-500">
+                    <th className="text-left py-2 pr-4">Tên</th>
+                    <th className="text-left py-2 pr-4">Đơn vị</th>
+                    <th className="text-left py-2 pr-4">Giá mua</th>
+                    <th className="text-left py-2 pr-4">Giá bán</th>
+                    <th className="text-right py-2">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {data.map((m) => (
+                    <tr key={m.id}>
+                      {editing?.id === m.id ? (
+                        <td colSpan={5} className="py-2">
+                          <MaterialForm
+                            initial={editing}
+                            onSave={(d) => updateMutation.mutate({ id: m.id, data: d as Partial<Material> })}
+                            onCancel={() => { setEditing(null); setEditError(null); }}
+                            loading={updateMutation.isPending}
+                            apiError={editError}
+                          />
+                        </td>
+                      ) : (
+                        <>
+                          <td className="py-2 pr-4 font-medium">{m.name}</td>
+                          <td className="py-2 pr-4 text-gray-500">{m.unit}</td>
+                          <td className="py-2 pr-4 text-gray-500">{fmt(m.default_purchase_price)}</td>
+                          <td className="py-2 pr-4 text-gray-500">{fmt(m.default_sale_price)}</td>
+                          <td className="py-2 text-right">
+                            <div className="flex gap-1 justify-end">
+                              <Button variant="ghost" size="sm" onClick={() => setEditing(m)}><Pencil size={14} /></Button>
+                              <Button variant="ghost" size="sm" className="text-red-500 hover:bg-red-50"
+                                onClick={() => setDeleteTarget(m)}>
+                                <Trash2 size={14} />
+                              </Button>
+                            </div>
+                          </td>
+                        </>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* ── Mobile card list ── */}
+            <div className="md:hidden space-y-2">
               {data.map((m) => (
-                <tr key={m.id}>
+                <div key={m.id}>
                   {editing?.id === m.id ? (
-                    <td colSpan={5} className="py-2">
-                      <MaterialForm
-                        initial={editing}
-                        onSave={(d) => updateMutation.mutate({ id: m.id, data: d as Partial<Material> })}
-                        onCancel={() => setEditing(null)}
-                        loading={updateMutation.isPending}
-                      />
-                    </td>
+                    <MaterialForm
+                      initial={editing}
+                      onSave={(d) => updateMutation.mutate({ id: m.id, data: d as Partial<Material> })}
+                      onCancel={() => { setEditing(null); setEditError(null); }}
+                      loading={updateMutation.isPending}
+                      apiError={editError}
+                    />
                   ) : (
-                    <>
-                      <td className="py-2 pr-4 font-medium">{m.name}</td>
-                      <td className="py-2 pr-4 text-gray-500">{m.unit}</td>
-                      <td className="py-2 pr-4 text-gray-500">{fmt(m.default_purchase_price)}</td>
-                      <td className="py-2 pr-4 text-gray-500">{fmt(m.default_sale_price)}</td>
-                      <td className="py-2 text-right">
-                        <div className="flex gap-1 justify-end">
-                          <Button variant="ghost" size="sm" onClick={() => setEditing(m)}><Pencil size={14} /></Button>
-                          <Button
-                            variant="ghost" size="sm" className="text-red-500 hover:bg-red-50"
-                            onClick={() => setDeleteTarget(m)}
-                          >
-                            <Trash2 size={14} />
+                    <div className="border border-gray-100 rounded-xl p-3 bg-white">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-gray-900">{m.name}
+                            <span className="ml-2 text-xs text-gray-400 font-normal">{m.unit}</span>
+                          </p>
+                          <div className="mt-1 text-xs text-gray-500 flex flex-wrap gap-x-4 gap-y-0.5">
+                            <span>Mua: <span className="font-medium text-gray-700">{fmt(m.default_purchase_price)}</span></span>
+                            <span>Bán: <span className="font-medium text-gray-700">{fmt(m.default_sale_price)}</span></span>
+                          </div>
+                        </div>
+                        <div className="flex gap-1 shrink-0">
+                          <Button variant="ghost" size="sm" onClick={() => setEditing(m)}><Pencil size={15} /></Button>
+                          <Button variant="ghost" size="sm" className="text-red-500 hover:bg-red-50"
+                            onClick={() => setDeleteTarget(m)}>
+                            <Trash2 size={15} />
                           </Button>
                         </div>
-                      </td>
-                    </>
+                      </div>
+                    </div>
                   )}
-                </tr>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+          </>
         )}
       </Card>
     </div>

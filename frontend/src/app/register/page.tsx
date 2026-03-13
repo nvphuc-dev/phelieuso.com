@@ -49,11 +49,11 @@ export default function RegisterPage() {
       <div className="w-full max-w-lg">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-emerald-600">♻ RWM</h1>
-          <p className="text-gray-500 mt-1">Đăng ký kho ve chai của bạn</p>
+          <p className="text-gray-500 mt-1 font-bold">Đăng Ký Kho Ve Chai Của Bạn</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-lg p-8 space-y-5">
-          <h2 className="text-xl font-semibold text-gray-800">Tạo tài khoản</h2>
+        <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-lg md:p-8 p-4 space-y-5">
+          <h2 className="text-xl font-semibold text-gray-800 text-center">Tạo Tài Khoản</h2>
 
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-lg">

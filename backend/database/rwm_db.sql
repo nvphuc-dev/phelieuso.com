@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: 127.0.0.1
--- Thời gian đã tạo: Th3 12, 2026 lúc 03:11 AM
+-- Thời gian đã tạo: Th3 13, 2026 lúc 01:24 PM
 -- Phiên bản máy phục vụ: 10.4.24-MariaDB
 -- Phiên bản PHP: 8.2.4
 
@@ -111,10 +111,10 @@ CREATE TABLE `inventory` (
 --
 
 INSERT INTO `inventory` (`id`, `tenant_id`, `material_id`, `total_weight`, `updated_at`) VALUES
-(1, 3, 1, '0.500', '2026-03-11 02:28:57'),
-(2, 3, 4, '90.000', '2026-03-11 07:35:21'),
-(3, 3, 5, '70.000', '2026-03-11 02:39:55'),
-(4, 3, 2, '21.000', '2026-03-11 07:34:57'),
+(1, 3, 1, '12.500', '2026-03-11 19:35:00'),
+(2, 3, 4, '185.000', '2026-03-11 19:35:00'),
+(3, 3, 5, '170.000', '2026-03-11 19:34:08'),
+(4, 3, 2, '46.000', '2026-03-11 19:35:00'),
 (6, 3, 3, '10.000', '2026-03-11 08:59:07'),
 (7, 3, 6, '0.000', '2026-03-11 07:34:57');
 
@@ -150,7 +150,11 @@ INSERT INTO `inventory_logs` (`id`, `tenant_id`, `material_id`, `reference_type`
 (9, 3, 4, 'purchase', 4, '20.000', 'Purchase #4', NULL),
 (10, 3, 6, 'purchase', 4, '5.000', 'Purchase #4', NULL),
 (11, 3, 4, 'sale', 2, '-90.000', 'Sale #2', NULL),
-(12, 3, 3, 'purchase', 5, '10.000', 'Purchase #5', NULL);
+(12, 3, 3, 'purchase', 5, '10.000', 'Purchase #5', NULL),
+(13, 3, 5, 'purchase', 6, '100.000', 'Purchase #6', NULL),
+(14, 3, 4, 'purchase', 7, '95.000', 'Purchase #7', NULL),
+(15, 3, 2, 'purchase', 7, '25.000', 'Purchase #7', NULL),
+(16, 3, 1, 'purchase', 7, '12.000', 'Purchase #7', NULL);
 
 -- --------------------------------------------------------
 
@@ -287,7 +291,8 @@ CREATE TABLE `personal_access_tokens` (
 INSERT INTO `personal_access_tokens` (`id`, `tokenable_type`, `tokenable_id`, `name`, `token`, `abilities`, `last_used_at`, `expires_at`, `created_at`, `updated_at`) VALUES
 (1, 'App\\Models\\User', 1, 'auth_token', 'cfa794285eb5c37bfcaf1a8f5f698d27571447c9731130c455690aa538a6893d', '[\"*\"]', '2026-03-11 03:16:13', NULL, '2026-03-11 01:59:32', '2026-03-11 03:16:13'),
 (2, 'App\\Models\\User', 2, 'auth_token', '27726e7ea049f030ec8bf60cd0217114fa02bde586fcf6190871c907b00edbc8', '[\"*\"]', NULL, NULL, '2026-03-11 02:21:43', '2026-03-11 02:21:43'),
-(27, 'App\\Models\\User', 8, 'auth_token', '27b79841e4810af8278f471fc0ca4d5cf6bf8917102488fe0b83c832243a1b1a', '[\"*\"]', '2026-03-11 09:14:14', NULL, '2026-03-11 09:04:12', '2026-03-11 09:14:14');
+(37, 'App\\Models\\User', 3, 'auth_token', '0c14da9da30c51d97ba921258d3ea2a43ad3a69dc5012164e35c75167d859c0f', '[\"*\"]', '2026-03-12 06:29:46', NULL, '2026-03-12 03:43:54', '2026-03-12 06:29:46'),
+(39, 'App\\Models\\User', 3, 'auth_token', '30ff39721d846078f5aa5bcfb5f4d5401f5e91c9c6fffda3fa6bfe096e09c3d1', '[\"*\"]', '2026-03-12 21:50:47', NULL, '2026-03-12 03:46:46', '2026-03-12 21:50:47');
 
 -- --------------------------------------------------------
 
@@ -315,7 +320,11 @@ INSERT INTO `purchase_items` (`id`, `purchase_id`, `material_id`, `weight`, `pri
 (8, 4, 2, '15.000', '6000.00', '90000.00', NULL),
 (9, 4, 4, '20.000', '2700.00', '54000.00', NULL),
 (10, 4, 6, '5.000', '2500.00', '12500.00', NULL),
-(11, 5, 3, '10.000', '150000.00', '1500000.00', NULL);
+(11, 5, 3, '10.000', '150000.00', '1500000.00', NULL),
+(12, 6, 5, '100.000', '6500.00', '650000.00', NULL),
+(13, 7, 4, '95.000', '2700.00', '256500.00', NULL),
+(14, 7, 2, '25.000', '6000.00', '150000.00', NULL),
+(15, 7, 1, '12.000', '27000.00', '324000.00', NULL);
 
 -- --------------------------------------------------------
 
@@ -343,7 +352,9 @@ CREATE TABLE `purchase_orders` (
 
 INSERT INTO `purchase_orders` (`id`, `tenant_id`, `customer_id`, `created_by`, `date`, `time`, `total_amount`, `status`, `note`, `created_at`, `updated_at`) VALUES
 (4, 3, 6, 3, '2026-03-11', '17:47:00', '374000.00', 'completed', NULL, '2026-03-11 03:47:40', '2026-03-11 07:34:57'),
-(5, 3, 5, 3, '2026-03-11', '22:57:00', '1500000.00', 'completed', NULL, '2026-03-11 08:59:07', '2026-03-11 08:59:07');
+(5, 3, 5, 3, '2026-03-11', '22:57:00', '1500000.00', 'completed', NULL, '2026-03-11 08:59:07', '2026-03-11 08:59:07'),
+(6, 3, 5, 8, '2026-03-12', '09:33:00', '650000.00', 'completed', NULL, '2026-03-11 19:34:08', '2026-03-11 19:34:08'),
+(7, 3, 4, 8, '2026-03-12', '09:34:00', '730500.00', 'completed', NULL, '2026-03-11 19:35:00', '2026-03-11 19:35:00');
 
 -- --------------------------------------------------------
 
@@ -459,9 +470,9 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `tenant_id`, `name`, `email`, `password`, `role`, `status`, `avatar`, `remember_token`, `created_at`, `updated_at`) VALUES
-(3, 3, 'Hồ Mỹ Vân', 'myvan@gmail.com', '$2y$12$eRKXD3UOBRyruW353cVpre4dlbg/cfPuqQokkjK4ax0ycmU11waUu', 'owner', 'active', NULL, NULL, '2026-03-11 02:22:30', '2026-03-11 02:22:30'),
+(3, 3, 'Hồ Mỹ Vân', 'myvan@gmail.com', '$2y$12$eRKXD3UOBRyruW353cVpre4dlbg/cfPuqQokkjK4ax0ycmU11waUu', 'owner', 'active', 'avatars/nM5oXetGOsz8JYEaJnoTLJoBBWOZSCPDCUcNT74J.png', NULL, '2026-03-11 02:22:30', '2026-03-12 02:37:48'),
 (4, 3, 'Thành Phong', 'thanhphong@gmail.com', '$2y$12$kVqzpN8qWJWEGUWB1FoWMOmgAv/Ky4lnZZfo334.a2NRnLQmnBFw6', 'manager', 'active', NULL, NULL, '2026-03-11 02:51:24', '2026-03-11 02:51:24'),
-(5, 3, 'Anh Tú', 'anhtu@gmail.com', '$2y$12$jHZmmWAV8CVi.9TQa65PoO07vjjGzFjoDcXT6ePyzqPDpIudzrWXy', 'employee', 'active', NULL, NULL, '2026-03-11 02:52:02', '2026-03-11 02:52:02'),
+(5, 3, 'Anh Tú', 'anhtu@gmail.com', '$2y$12$jHZmmWAV8CVi.9TQa65PoO07vjjGzFjoDcXT6ePyzqPDpIudzrWXy', 'employee', 'active', 'avatars/10YUW9Cd7vz6mAnMQOxy4SDJYlJGrEMVj7n2Eqay.png', NULL, '2026-03-11 02:52:02', '2026-03-12 02:36:06'),
 (6, 3, 'Anh Phúc', 'anhphuc@gmail.com', '$2y$12$ftk2huRD7yQSo.g/b/YHlOFx.EyZv2jEGq37uKj5jAqYpSGX.omye', 'employee', 'active', NULL, NULL, '2026-03-11 02:52:25', '2026-03-11 08:39:08'),
 (7, 3, 'Chị Phượng', 'chiphuong@gmail.com', '$2y$12$cfJ2QRUBo/9B/Oo9BcKE9.rCzC6qF4VyA9AzkwwY.k1mAvNSdyT3G', 'employee', 'active', NULL, NULL, '2026-03-11 02:52:51', '2026-03-11 02:52:51'),
 (8, 3, 'Hạng Vũ', 'hangvu@gmail.com', '$2y$12$GO1BX0sKuT73BQdULkXo7O.N6oBfFnuRFzRUZSSLUA4zvKtFCn5tG', 'manager', 'active', NULL, NULL, '2026-03-11 03:04:02', '2026-03-11 03:04:02'),
@@ -672,7 +683,7 @@ ALTER TABLE `inventory`
 -- AUTO_INCREMENT cho bảng `inventory_logs`
 --
 ALTER TABLE `inventory_logs`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT cho bảng `jobs`
@@ -684,7 +695,7 @@ ALTER TABLE `jobs`
 -- AUTO_INCREMENT cho bảng `materials`
 --
 ALTER TABLE `materials`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT cho bảng `migrations`
@@ -696,19 +707,19 @@ ALTER TABLE `migrations`
 -- AUTO_INCREMENT cho bảng `personal_access_tokens`
 --
 ALTER TABLE `personal_access_tokens`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
 
 --
 -- AUTO_INCREMENT cho bảng `purchase_items`
 --
 ALTER TABLE `purchase_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT cho bảng `purchase_orders`
 --
 ALTER TABLE `purchase_orders`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT cho bảng `sales_items`

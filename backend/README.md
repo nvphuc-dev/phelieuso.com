@@ -1,66 +1,383 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# RWM Backend — Laravel 12 API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Phần backend của hệ thống **RWM (Recycling Warehouse Management)** — quản lý kho ve chai/phế liệu.  
+Cung cấp REST API cho frontend Next.js, áp dụng kiến trúc **Multi-tenant SaaS** (shared database, `tenant_id`).
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Mục lục
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- [Công nghệ sử dụng](#công-nghệ-sử-dụng)
+- [Kiến trúc hệ thống](#kiến-trúc-hệ-thống)
+- [Cấu trúc thư mục](#cấu-trúc-thư-mục)
+- [Cài đặt môi trường dev](#cài-đặt-môi-trường-dev)
+- [Biến môi trường](#biến-môi-trường)
+- [Database & Migration](#database--migration)
+- [Luồng phát triển](#luồng-phát-triển)
+- [Deploy lên Shared Hosting](#deploy-lên-shared-hosting)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## Công nghệ sử dụng
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+| Thành phần | Phiên bản | Mục đích |
+|---|---|---|
+| PHP | 8.2+ | Ngôn ngữ chính |
+| Laravel | 12.x | Framework backend |
+| Laravel Sanctum | 4.x | Xác thực token-based (stateless API) |
+| MySQL | 8.0+ | Cơ sở dữ liệu |
+| Composer | 2.x | Quản lý dependency PHP |
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+---
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Kiến trúc hệ thống
 
-## Laravel Sponsors
+```
+┌─────────────────────────────────────────────┐
+│              Multi-Tenant SaaS              │
+│                                             │
+│  Tenant A (kho 1)   Tenant B (kho 2)  ...  │
+│       │                    │               │
+│       └────────┬───────────┘               │
+│                ▼                            │
+│        Shared Database (MySQL)              │
+│        tenant_id phân biệt dữ liệu          │
+└─────────────────────────────────────────────┘
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+**Luồng xác thực:**
+```
+Client → POST /api/auth/login
+       ← { token, user }
+Client → GET /api/purchases   (Header: Authorization: Bearer {token})
+       ← data (chỉ trả dữ liệu của tenant đó)
+```
 
-### Premium Partners
+**Phân quyền (Role-Based Access Control):**
+- `owner` — toàn quyền
+- `manager` — quản lý dữ liệu, không thể thay đổi trạng thái tài khoản
+- `employee` — chỉ xem và tạo đơn mua vào
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+---
 
-## Contributing
+## Cấu trúc thư mục
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```
+backend/
+├── app/
+│   ├── Http/
+│   │   ├── Controllers/Api/   # API controllers
+│   │   ├── Middleware/        # CheckRole, TenantScope
+│   │   └── Requests/Api/      # Form validation (StoreXxxRequest)
+│   ├── Models/                # Eloquent models
+│   └── Services/              # Business logic (PurchaseService, SalesService, InventoryService)
+├── database/
+│   ├── migrations/            # Schema definitions
+│   └── seeders/
+├── routes/
+│   └── api.php                # Tất cả API routes
+├── config/
+│   └── cors.php               # CORS configuration
+└── .env                       # Biến môi trường (không commit)
+```
 
-## Code of Conduct
+**Quy ước đặt tên:**
+- Controller: `{Resource}Controller` — chỉ xử lý HTTP, gọi Service
+- Service: `{Resource}Service` — chứa business logic
+- Request: `Store{Resource}Request`, `Update{Resource}Request`
+- Resource: `{Resource}Resource` — transform model thành JSON response
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+---
 
-## Security Vulnerabilities
+## Cài đặt môi trường dev
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Yêu cầu
+- PHP 8.2+ (với extensions: `pdo_mysql`, `mbstring`, `openssl`, `tokenizer`, `xml`, `fileinfo`)
+- Composer 2.x
+- MySQL 8.0+
 
-## License
+### Các bước
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+# 1. Cài dependencies
+composer install
+
+# 2. Tạo file .env
+cp .env.example .env
+
+# 3. Sinh APP_KEY
+php artisan key:generate
+
+# 4. Cấu hình .env (xem phần Biến môi trường bên dưới)
+
+# 5. Tạo database trên MySQL, sau đó chạy migration
+php artisan migrate
+
+# 6. Khởi động server dev
+php artisan serve --host=0.0.0.0 --port=8000
+```
+
+> **Lưu ý:** `--host=0.0.0.0` cho phép truy cập từ thiết bị khác trong mạng LAN (test mobile).
+
+---
+
+## Biến môi trường
+
+Tạo file `.env` từ `.env.example` và điền các giá trị:
+
+```ini
+APP_NAME="RWM - Recycling Warehouse Management"
+APP_ENV=local           # production khi deploy
+APP_KEY=                # tự sinh bằng php artisan key:generate
+APP_DEBUG=true          # false khi production
+APP_URL=http://localhost:8000
+
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=rwm_db
+DB_USERNAME=root
+DB_PASSWORD=
+
+SESSION_DRIVER=file
+CACHE_STORE=file
+
+# CORS — domain của frontend
+SANCTUM_STATEFUL_DOMAINS=localhost:3000
+FRONTEND_URL=http://localhost:3000
+
+# Lưu trữ file (avatar)
+FILESYSTEM_DISK=public
+```
+
+**Khi test trên điện thoại qua IP LAN** (ví dụ IP: `192.168.1.3`):
+```ini
+SANCTUM_STATEFUL_DOMAINS=localhost:3000,192.168.1.3:3000
+FRONTEND_URL=http://192.168.1.3:3000
+```
+
+---
+
+## Database & Migration
+
+### Các bảng chính
+
+```
+tenants              — Thông tin kho (multi-tenant)
+users                — Người dùng (owner/manager/employee), có tenant_id
+customers            — Khách hàng (người bán/mua), có tenant_id
+materials            — Vật liệu/phế liệu, có tenant_id
+purchase_orders      — Đơn mua vào header
+purchase_items       — Chi tiết đơn mua (vật liệu, cân nặng, giá)
+sales_orders         — Đơn bán ra header
+sales_items          — Chi tiết đơn bán
+inventory            — Tồn kho hiện tại theo vật liệu
+inventory_logs       — Lịch sử thay đổi tồn kho (audit trail)
+user_salaries        — Bảng lương tháng nhân viên
+```
+
+### Lệnh thường dùng
+
+```bash
+# Chạy migration mới
+php artisan migrate
+
+# Reset và chạy lại toàn bộ (xóa data)
+php artisan migrate:fresh
+
+# Xem trạng thái migration
+php artisan migrate:status
+
+# Tạo migration mới
+php artisan make:migration add_field_to_table_name
+```
+
+### Quy tắc Multi-tenant
+Mọi bảng dữ liệu đều có cột `tenant_id`. Middleware `TenantScope` tự động lọc theo `tenant_id` của user đang đăng nhập — **không cần lọc thủ công trong controller**.
+
+---
+
+## Luồng phát triển
+
+### Thêm một tính năng mới
+
+```
+1. Tạo Migration     → php artisan make:migration
+2. Tạo Model         → php artisan make:model ModelName
+3. Tạo FormRequest   → php artisan make:request Api/StoreXxxRequest
+4. Tạo Service       → tạo thủ công app/Services/XxxService.php
+5. Tạo Controller    → php artisan make:controller Api/XxxController
+6. Tạo Resource      → php artisan make:resource Api/XxxResource
+7. Đăng ký Route     → routes/api.php
+```
+
+### Quy trình xử lý Request
+
+```
+HTTP Request
+    │
+    ▼
+routes/api.php          — định tuyến + middleware (auth, role, tenant)
+    │
+    ▼
+FormRequest             — validate dữ liệu đầu vào
+    │
+    ▼
+Controller              — nhận request, gọi service, trả response
+    │
+    ▼
+Service                 — business logic, transaction, gọi repository/model
+    │
+    ▼
+Model/Eloquent          — tương tác database
+    │
+    ▼
+API Resource            — transform model → JSON response
+    │
+    ▼
+HTTP Response (JSON)
+```
+
+### Git workflow (khuyến nghị)
+
+```bash
+# Tạo branch cho feature mới
+git checkout -b feature/ten-tinh-nang
+
+# Commit
+git add .
+git commit -m "feat: mô tả ngắn gọn"
+
+# Merge vào main
+git checkout main
+git merge feature/ten-tinh-nang
+```
+
+---
+
+## Deploy lên Shared Hosting
+
+> **Yêu cầu Shared Hosting:**
+> - PHP **8.2+** (kiểm tra trong cPanel → PHP Selector)
+> - MySQL 5.7+ / 8.0
+> - Có thể trỏ Document Root vào subfolder (hoặc dùng subdomain)
+> - SSH access (khuyến nghị) hoặc File Manager
+
+### Bước 1 — Chuẩn bị file trên máy local
+
+```bash
+# Cài dependencies production (bỏ dev packages)
+composer install --optimize-autoloader --no-dev
+
+# Tạo file .env.production (copy từ .env, điền thông tin thật)
+```
+
+### Bước 2 — Upload lên hosting
+
+**Cấu trúc upload:**
+```
+/home/username/                  ← root account
+├── public_html/                 ← document root mặc định (KHÔNG để code ở đây)
+│   └── (để trống hoặc redirect)
+└── rwm-api/                     ← upload toàn bộ thư mục backend vào đây
+    ├── app/
+    ├── bootstrap/
+    ├── config/
+    ├── database/
+    ├── public/                  ← đây mới là web root thật
+    ├── routes/
+    ├── storage/
+    ├── vendor/
+    └── .env
+```
+
+**Cách trỏ web root về `public/` (chọn 1 trong 2):**
+
+**Option A — Subdomain (khuyến nghị):**
+1. Tạo subdomain `api.domain.com` trong cPanel
+2. Trỏ Document Root của subdomain đó vào `/home/username/rwm-api/public`
+
+**Option B — Symlink trong `public_html`:**
+```bash
+# SSH vào hosting
+ln -s /home/username/rwm-api/public /home/username/public_html/api
+```
+
+### Bước 3 — Cấu hình `.env` production
+
+```ini
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=https://api.domain.com
+
+DB_HOST=localhost
+DB_DATABASE=username_rwm_db    # tên DB tạo trong cPanel
+DB_USERNAME=username_dbuser
+DB_PASSWORD=matkhau_db
+
+FILESYSTEM_DISK=public
+FRONTEND_URL=https://app.domain.com
+
+# Nếu dùng HTTPS, thêm:
+SESSION_SECURE_COOKIE=true
+```
+
+### Bước 4 — Thiết lập sau upload
+
+```bash
+# Qua SSH:
+
+# Phân quyền thư mục
+chmod -R 755 /home/username/rwm-api
+chmod -R 775 /home/username/rwm-api/storage
+chmod -R 775 /home/username/rwm-api/bootstrap/cache
+
+# Tạo symlink storage
+php artisan storage:link
+
+# Chạy migration
+php artisan migrate --force
+
+# Tối ưu cache
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+```
+
+### Bước 5 — Kiểm tra `.htaccess`
+
+File `public/.htaccess` của Laravel đã có sẵn. Đảm bảo hosting **bật mod_rewrite**:
+```
+# Kiểm tra trong cPanel → Apache Handlers hoặc liên hệ hosting support
+```
+
+### Lưu ý quan trọng khi dùng Shared Hosting
+
+> ⚠️ **Không upload thư mục `vendor/` bằng FTP** — rất chậm (hàng nghìn file).  
+> Nên dùng SSH và chạy `composer install` trực tiếp trên server.
+
+> ⚠️ **Không commit file `.env`** vào git. Upload riêng lên server.
+
+> ⚠️ Shared hosting thường **giới hạn RAM/CPU** — nếu app chậm, xem xét nâng lên VPS.
+
+> ⚠️ **HTTPS bắt buộc** cho production — cài SSL miễn phí qua cPanel → Let's Encrypt.
+
+---
+
+## API Endpoints tóm tắt
+
+| Method | Endpoint | Quyền | Mô tả |
+|---|---|---|---|
+| POST | `/api/auth/register` | Public | Đăng ký tenant mới |
+| POST | `/api/auth/login` | Public | Đăng nhập |
+| POST | `/api/auth/logout` | Auth | Đăng xuất |
+| GET | `/api/purchases` | Auth | Danh sách đơn mua |
+| POST | `/api/purchases` | Auth | Tạo đơn mua |
+| POST | `/api/purchases/{id}/cancel` | Auth | Huỷ đơn mua |
+| GET/POST | `/api/sales` | Owner/Manager | Đơn bán |
+| GET/POST | `/api/customers` | Auth | Khách hàng |
+| GET/POST | `/api/materials` | Auth | Vật liệu |
+| GET | `/api/inventory` | Owner/Manager | Tồn kho |
+| GET | `/api/reports/dashboard` | Owner/Manager | Báo cáo tổng hợp |
+| GET | `/api/reports/customer-revenue` | Owner/Manager | Doanh thu khách hàng |
+| GET/PUT | `/api/users/{id}/salaries/{month}` | Owner/Manager | Lương tháng |

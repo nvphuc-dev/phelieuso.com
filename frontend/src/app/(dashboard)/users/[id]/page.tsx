@@ -12,8 +12,11 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import {
   ArrowLeft, Camera, Trash2, KeyRound,
-  BadgeCheck, User as UserIcon, DollarSign,
+  BadgeCheck, User as UserIcon, DollarSign, LogOut,
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { clearAuth } from '@/lib/auth';
+import { authService } from '@/services/auth.service';
 
 const ROLE_LABEL: Record<string, string> = {
   owner: 'Chủ vựa', manager: 'Quản lý', employee: 'Nhân viên',
@@ -27,10 +30,17 @@ const ROLE_COLOR: Record<string, string> = {
 export default function UserProfilePage() {
   const params = useParams();
   const userId = Number(params.id);
+  const router = useRouter();
   const qc = useQueryClient();
 
   const [me, setMe] = useState<User | null>(null);
   useEffect(() => { setMe(getUser()); }, []);
+
+  const handleLogout = async () => {
+    try { await authService.logout(); } catch { /* ignore */ }
+    clearAuth();
+    router.push('/login');
+  };
 
   const isSelf  = me?.id === userId;
   const isOwner = me?.role === 'owner';
@@ -124,50 +134,78 @@ export default function UserProfilePage() {
 
       {/* Avatar + Info */}
       <Card>
-        <div className="flex items-start gap-6">
+        {/* ── Mobile: vertical stack; Desktop: horizontal row ── */}
+        <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6">
+
           {/* Avatar */}
-          <div className="shrink-0 relative group">
-            <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 border-2 border-gray-200 flex items-center justify-center">
-              {avatarSrc ? (
-                <img src={avatarSrc} alt={user.name} className="w-full h-full object-cover" />
-              ) : (
-                <UserIcon size={36} className="text-gray-400" />
-              )}
-            </div>
-            {canEdit && (
-              <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
-                <button
-                  onClick={() => fileRef.current?.click()}
-                  className="p-1.5 bg-white rounded-full hover:bg-gray-100"
-                  title="Đổi ảnh"
-                >
-                  <Camera size={14} className="text-gray-700" />
-                </button>
-                {user.avatar && (
-                  <button
-                    onClick={() => removeAvatarMutation.mutate()}
-                    className="p-1.5 bg-white rounded-full hover:bg-red-50"
-                    title="Xoá ảnh"
-                  >
-                    <Trash2 size={14} className="text-red-500" />
-                  </button>
+          <div className="flex flex-col items-center sm:items-start gap-2 shrink-0">
+            <div className="relative group">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden bg-gray-100 border-2 border-gray-200 flex items-center justify-center">
+                {avatarSrc ? (
+                  <img src={avatarSrc} alt={user.name} className="w-full h-full object-cover" />
+                ) : (
+                  <UserIcon size={32} className="text-gray-400" />
                 )}
               </div>
+
+              {/* Desktop: hover overlay */}
+              {canEdit && (
+                <div className="hidden sm:flex absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity items-center justify-center gap-1">
+                  <button onClick={() => fileRef.current?.click()}
+                    className="p-1.5 bg-white rounded-full hover:bg-gray-100" title="Đổi ảnh">
+                    <Camera size={14} className="text-gray-700" />
+                  </button>
+                  {user.avatar && (
+                    <button onClick={() => removeAvatarMutation.mutate()}
+                      className="p-1.5 bg-white rounded-full hover:bg-red-50" title="Xoá ảnh">
+                      <Trash2 size={14} className="text-red-500" />
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Mobile: always-visible camera badge */}
+              {canEdit && (
+                <button
+                  onClick={() => fileRef.current?.click()}
+                  className="sm:hidden absolute bottom-0 right-0 p-1.5 bg-emerald-500 hover:bg-emerald-600 rounded-full shadow-md transition-colors"
+                  title="Đổi ảnh"
+                >
+                  <Camera size={13} className="text-white" />
+                </button>
+              )}
+
+              {avatarMutation.isPending && (
+                <div className="absolute inset-0 rounded-full bg-black/30 flex items-center justify-center">
+                  <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                  </svg>
+                </div>
+              )}
+            </div>
+
+            {/* Mobile: remove avatar button below avatar */}
+            {canEdit && user.avatar && (
+              <button
+                onClick={() => removeAvatarMutation.mutate()}
+                className="sm:hidden text-xs text-red-500 hover:underline flex items-center gap-1"
+              >
+                <Trash2 size={12} /> Xoá ảnh
+              </button>
             )}
-            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onFileChange} />
-            {avatarMutation.isPending && (
-              <div className="absolute inset-0 rounded-full bg-black/30 flex items-center justify-center">
-                <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                </svg>
-              </div>
+            {/* Desktop hint */}
+            {canEdit && (
+              <p className="hidden sm:block text-xs text-gray-400 text-center">Di chuột vào ảnh<br />để đổi avatar</p>
             )}
           </div>
 
+          <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onFileChange} />
+
           {/* Info */}
-          <div className="flex-1 space-y-3 text-sm">
-            <div className="flex items-center gap-2">
+          <div className="flex-1 min-w-0">
+            {/* Badges */}
+            <div className="flex items-center flex-wrap gap-2 mb-3">
               <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${ROLE_COLOR[user.role]}`}>
                 {ROLE_LABEL[user.role] ?? user.role}
               </span>
@@ -175,14 +213,22 @@ export default function UserProfilePage() {
                 {user.status === 'active' ? 'Đang hoạt động' : 'Tạm dừng'}
               </span>
             </div>
-            <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-gray-600">
-              <div><span className="text-gray-400">Họ tên:</span> <span className="font-medium text-gray-800">{user.name}</span></div>
-              <div><span className="text-gray-400">Email:</span> <span className="font-medium text-gray-800">{user.email}</span></div>
-              <div><span className="text-gray-400">Tham gia:</span> {new Date(user.created_at).toLocaleDateString('vi-VN')}</div>
+
+            {/* Fields: single col on mobile, 2 col on sm+ */}
+            <div className="space-y-1.5 text-sm text-gray-600">
+              <div className="flex gap-2">
+                <span className="text-gray-400 w-20 shrink-0">Họ tên</span>
+                <span className="font-medium text-gray-900 break-all">{user.name}</span>
+              </div>
+              <div className="flex gap-2">
+                <span className="text-gray-400 w-20 shrink-0">Email</span>
+                <span className="font-medium text-gray-900 break-all">{user.email}</span>
+              </div>
+              <div className="flex gap-2">
+                <span className="text-gray-400 w-20 shrink-0">Tham gia</span>
+                <span className="text-gray-700">{new Date(user.created_at).toLocaleDateString('vi-VN')}</span>
+              </div>
             </div>
-            {canEdit && (
-              <p className="text-xs text-gray-400">Di chuột vào ảnh để đổi avatar</p>
-            )}
           </div>
         </div>
 
@@ -197,6 +243,19 @@ export default function UserProfilePage() {
           </div>
         )}
       </Card>
+
+      {/* Logout — only when viewing own profile */}
+      {isSelf && (
+        <div className="pt-2">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 text-sm text-red-500 hover:text-red-700 hover:underline transition-colors"
+          >
+            <LogOut size={16} />
+            Đăng xuất khỏi tài khoản
+          </button>
+        </div>
+      )}
 
       {/* Change Password */}
       {canEdit && (

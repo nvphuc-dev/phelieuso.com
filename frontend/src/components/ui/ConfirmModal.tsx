@@ -64,7 +64,7 @@ export default function ConfirmModal({
       />
 
       {/* Panel */}
-      <div className="relative z-10 w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6 space-y-4 animate-in zoom-in-95 duration-150">
+      <div className="relative z-10 w-full max-w-sm bg-white rounded-2xl shadow-2xl p-4 space-y-4 animate-in zoom-in-95 duration-150">
         {/* Icon + Title */}
         <div className="flex items-start gap-4">
           <div className={`shrink-0 flex items-center justify-center w-10 h-10 rounded-full ${iconBg}`}>

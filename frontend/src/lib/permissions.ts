@@ -12,9 +12,11 @@ const ROLE_ALLOWED_PATHS: Record<string, string[]> = {
     '/reports',
     '/customers/bonus',
     '/users',
+    '/guide',
   ],
   employee: [
     '/purchases',
+    '/guide',
     // /users/[id] được xử lý riêng bên dưới qua canAccess()
   ],
 };

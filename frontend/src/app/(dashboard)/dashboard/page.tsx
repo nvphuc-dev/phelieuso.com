@@ -63,7 +63,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {stats.map(({ label, value, sub, icon: Icon, color }) => (
             <Card key={label} className="!p-0">
-              <div className="p-6 flex items-start gap-4">
+              <div className="p-0 flex items-start gap-4">
                 <div className={`p-3 rounded-xl ${color}`}>
                   <Icon size={22} />
                 </div>
@@ -78,7 +78,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
         <Card title="Mua vào gần đây">
           <p className="text-sm text-gray-500">Xem tại trang <a href="/purchases" className="text-emerald-600 hover:underline">Mua vào</a></p>
         </Card>

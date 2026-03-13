@@ -109,70 +109,78 @@ export default function UserSalaryPage() {
   const annualBonus   = yearData.reduce((s, r) => s + r.bonus, 0);
 
   return (
-    <div className="space-y-6 max-w-5xl">
+    <div className="space-y-4 max-w-5xl">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link href={`/users/${userId}`}>
-            <Button variant="ghost" size="sm"><ArrowLeft size={16} /></Button>
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Lương tháng — {user?.name ?? '...'}
-            </h1>
-            <p className="text-sm text-gray-500">Quản lý lương, thưởng và ngày phép</p>
+      <div className="flex items-start gap-3">
+        <Link href={`/users/${userId}`} className="shrink-0 mt-1">
+          <Button variant="ghost" size="sm"><ArrowLeft size={16} /></Button>
+        </Link>
+        <div className="flex-1 min-w-0">
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-snug">
+            Lương tháng — {user?.name ?? '...'}
+          </h1>
+          <p className="text-sm text-gray-500">Quản lý lương, thưởng và ngày phép</p>
+          {/* Year selector — below title on mobile, hidden here on md+ */}
+          <div className="flex items-center gap-1.5 mt-2 md:hidden">
+            {[new Date().getFullYear() - 1, new Date().getFullYear()].map((y) => (
+              <button key={y} onClick={() => setYear(y)}
+                className={`flex-1 py-1.5 rounded-lg text-sm font-medium transition-colors text-center ${year === y ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+                {y}
+              </button>
+            ))}
           </div>
         </div>
-        {/* Year selector */}
-        <div className="flex items-center gap-2">
+        {/* Year selector — right side on desktop only */}
+        <div className="hidden md:flex items-center gap-1.5 shrink-0">
           {[new Date().getFullYear() - 1, new Date().getFullYear()].map((y) => (
             <button key={y} onClick={() => setYear(y)}
-              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${year === y ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+              className={`px-2.5 py-1 rounded-lg text-sm font-medium transition-colors ${year === y ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
               {y}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Annual summary */}
+      {/* Annual summary — 1 col mobile, 3 col sm+ */}
       {yearData.length > 0 && (
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <Card>
-            <div className="flex items-start gap-3">
-              <div className="p-2 bg-emerald-100 rounded-lg"><TrendingUp size={18} className="text-emerald-600" /></div>
-              <div>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-emerald-100 rounded-lg shrink-0"><TrendingUp size={18} className="text-emerald-600" /></div>
+              <div className="min-w-0">
                 <p className="text-xs text-gray-500">Lương thực nhận {year}</p>
-                <p className="text-xl font-bold text-gray-900">{fmt(annualTotal)}</p>
+                <p className="text-lg font-bold text-gray-900 break-all">{fmt(annualTotal)}</p>
               </div>
             </div>
           </Card>
           <Card>
-            <div className="flex items-start gap-3">
-              <div className="p-2 bg-yellow-100 rounded-lg"><TrendingUp size={18} className="text-yellow-600" /></div>
-              <div>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-yellow-100 rounded-lg shrink-0"><TrendingUp size={18} className="text-yellow-600" /></div>
+              <div className="min-w-0">
                 <p className="text-xs text-gray-500">Tổng thưởng {year}</p>
-                <p className="text-xl font-bold text-yellow-700">{fmt(annualBonus)}</p>
+                <p className="text-lg font-bold text-yellow-700 break-all">{fmt(annualBonus)}</p>
               </div>
             </div>
           </Card>
           <Card>
-            <div className="flex items-start gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg"><Calendar size={18} className="text-blue-600" /></div>
-              <div>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-100 rounded-lg shrink-0"><Calendar size={18} className="text-blue-600" /></div>
+              <div className="min-w-0">
                 <p className="text-xs text-gray-500">Số tháng đã nhập</p>
-                <p className="text-xl font-bold text-gray-900">{yearData.length} / 12</p>
+                <p className="text-lg font-bold text-gray-900">{yearData.length} / 12</p>
               </div>
             </div>
           </Card>
         </div>
       )}
 
-      <div className="grid grid-cols-3 gap-6">
-        {/* Month picker column */}
-        <div className="col-span-1">
+      {/* Main layout: stack on mobile, side-by-side on md+ */}
+      <div className="flex flex-col md:grid md:grid-cols-3 gap-4 md:gap-6">
+        {/* Month picker */}
+        <div className="md:col-span-1">
           <Card>
             <h3 className="text-sm font-semibold text-gray-700 mb-3">Chọn tháng — {year}</h3>
-            <div className="grid grid-cols-3 gap-1.5">
+            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-3 gap-1.5">
               {MONTHS.map((label, idx) => {
                 const m      = idx + 1;
                 const mStr   = `${year}-${String(m).padStart(2, '0')}`;
@@ -220,8 +228,8 @@ export default function UserSalaryPage() {
           </Card>
         </div>
 
-        {/* Form column */}
-        <div className="col-span-2 space-y-4">
+        {/* Form + calculation */}
+        <div className="md:col-span-2 space-y-4">
           <Card>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-base font-semibold text-gray-800">
@@ -235,21 +243,33 @@ export default function UserSalaryPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <Input label="Lương cơ bản (₫)" type="number" min="0"
-                value={form.base_salary} onChange={set('base_salary')} />
-              <Input label="Ngày công chuẩn / tháng" type="number" min="1" max="31"
-                value={form.working_days} onChange={set('working_days')} />
-              <Input label="Số ngày phép có lương" type="number" min="0" max="31"
-                value={form.paid_leave_days} onChange={set('paid_leave_days')} />
-              <Input label="Số ngày nghỉ thực tế" type="number" min="0" max="31" step="0.5"
-                value={form.absent_days} onChange={set('absent_days')} />
-              <Input label="Thưởng tháng (₫)" type="number" min="0"
-                value={form.bonus} onChange={set('bonus')} />
-              <Input label="Ghi chú" value={form.note} onChange={set('note')} />
+              <div className="col-span-2 sm:col-span-1">
+                <Input label="Lương cơ bản (₫)" type="number" min="0"
+                  value={form.base_salary} onChange={set('base_salary')} />
+              </div>
+              <div className="col-span-2 sm:col-span-1">
+                <Input label="Ngày công chuẩn / tháng" type="number" min="1" max="31"
+                  value={form.working_days} onChange={set('working_days')} />
+              </div>
+              <div className="col-span-2 sm:col-span-1">
+                <Input label="Số ngày phép có lương" type="number" min="0" max="31"
+                  value={form.paid_leave_days} onChange={set('paid_leave_days')} />
+              </div>
+              <div className="col-span-2 sm:col-span-1">
+                <Input label="Số ngày nghỉ thực tế" type="number" min="0" max="31" step="0.5"
+                  value={form.absent_days} onChange={set('absent_days')} />
+              </div>
+              <div className="col-span-2 sm:col-span-1">
+                <Input label="Thưởng tháng (₫)" type="number" min="0"
+                  value={form.bonus} onChange={set('bonus')} />
+              </div>
+              <div className="col-span-2 sm:col-span-1">
+                <Input label="Ghi chú" value={form.note} onChange={set('note')} />
+              </div>
             </div>
 
             <Button
-              className="mt-4"
+              className="mt-4 w-full sm:w-auto"
               size="sm"
               loading={upsertMutation.isPending}
               disabled={!form.base_salary}
@@ -268,7 +288,7 @@ export default function UserSalaryPage() {
                 <span className="font-medium">{fmt(Number(form.base_salary) || 0)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-500">Lương 1 ngày công ({form.working_days} ngày)</span>
+                <span className="text-gray-500">Lương 1 ngày ({form.working_days} ngày)</span>
                 <span>{fmt(Math.round(daily))}</span>
               </div>
               <div className="flex justify-between">
@@ -280,14 +300,16 @@ export default function UserSalaryPage() {
                 <span className="text-green-600">− {form.paid_leave_days} ngày</span>
               </div>
               {excess > 0 ? (
-                <div className="flex items-center justify-between bg-red-50 rounded-lg px-3 py-2 border border-red-100">
-                  <span className="flex items-center gap-1.5 text-red-600"><AlertCircle size={14} /> Ngày nghỉ bị trừ lương ({excess} ngày)</span>
-                  <span className="font-semibold text-red-600">− {fmt(Math.round(deduct))}</span>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 bg-red-50 rounded-lg px-3 py-2 border border-red-100">
+                  <span className="flex items-center gap-1.5 text-red-600 text-xs sm:text-sm">
+                    <AlertCircle size={14} className="shrink-0" /> Ngày nghỉ bị trừ lương ({excess} ngày)
+                  </span>
+                  <span className="font-semibold text-red-600 text-right">− {fmt(Math.round(deduct))}</span>
                 </div>
               ) : (
-                <div className="flex justify-between bg-green-50 rounded-lg px-3 py-2 border border-green-100">
-                  <span className="text-green-700">Trong ngày phép có lương — không trừ</span>
-                  <span className="text-green-600">0 đ</span>
+                <div className="flex flex-col sm:flex-row sm:justify-between gap-1 bg-green-50 rounded-lg px-3 py-2 border border-green-100">
+                  <span className="text-green-700 text-xs sm:text-sm">Trong ngày phép có lương — không trừ</span>
+                  <span className="text-green-600 text-right">0 đ</span>
                 </div>
               )}
               {Number(form.bonus) > 0 && (

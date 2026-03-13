@@ -88,15 +88,15 @@ export default function NewPurchasePage() {
     <div className="space-y-5 max-w-4xl">
       <div className="flex items-center gap-3">
         <Link href="/purchases"><Button variant="ghost" size="sm"><ArrowLeft size={16} /></Button></Link>
-        <h1 className="text-2xl font-bold text-gray-900">Tạo đơn mua vào</h1>
+        <h1 className="text-xl md:text-2xl font-bold text-gray-900">Tạo đơn mua vào</h1>
       </div>
 
       {error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-lg">{error}</div>}
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <Card title="Thông tin đơn">
-          <div className="grid grid-cols-3 gap-4">
-            <div className="col-span-3 relative">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="sm:col-span-3">
               <SearchableSelect
                 label="Người bán"
                 placeholder="-- Chọn người bán --"
@@ -111,54 +111,85 @@ export default function NewPurchasePage() {
                 required
               />
             </div>
-            <div className="col-span-2">
+            <div className="sm:col-span-2">
               <Input label="Ngày" type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
             </div>
             <Input label="Giờ" type="time" value={time} onChange={(e) => setTime(e.target.value)} required />
-            <div className="col-span-3">
+            <div className="sm:col-span-3">
               <Input label="Ghi chú" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Ghi chú (tuỳ chọn)" />
             </div>
           </div>
         </Card>
 
         <Card title="Danh sách hàng">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b text-gray-500">
-                <th className="text-left py-2 pr-3">Vật liệu</th>
-                <th className="text-left py-2 pr-3 w-28">Cân nặng (kg)</th>
-                <th className="text-left py-2 pr-3 w-36">Đơn giá (₫/kg)</th>
-                <th className="text-right py-2 w-32">Thành tiền</th>
-                <th className="w-8" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {items.map((row) => (
-                <tr key={row._key}>
-                  <td className="py-1.5 pr-3">
-                    <Select value={row.material_id || ''} onChange={(e) => updateRow(row._key, 'material_id', Number(e.target.value))}>
-                      <option value="">-- Chọn --</option>
-                      {materials.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
-                    </Select>
-                  </td>
-                  <td className="py-1.5 pr-3">
-                    <Input type="number" step="0.001" min="0" value={row.weight || ''} onChange={(e) => updateRow(row._key, 'weight', e.target.value)} placeholder="0" />
-                  </td>
-                  <td className="py-1.5 pr-3">
-                    <Input type="number" step="1" min="0" value={row.price_per_unit || ''} onChange={(e) => updateRow(row._key, 'price_per_unit', e.target.value)} placeholder="0" />
-                  </td>
-                  <td className="py-1.5 text-right font-medium text-gray-700">
-                    {new Intl.NumberFormat('vi-VN').format((row.weight || 0) * (row.price_per_unit || 0))} ₫
-                  </td>
-                  <td className="py-1.5 pl-2">
-                    <Button variant="ghost" size="sm" type="button" className="text-red-400" onClick={() => removeRow(row._key)} disabled={items.length === 1}>
-                      <Trash2 size={14} />
-                    </Button>
-                  </td>
+          {/* ── Desktop table ── */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b text-gray-500">
+                  <th className="text-left py-2 pr-3">Vật liệu</th>
+                  <th className="text-left py-2 pr-3 w-28">Cân nặng (kg)</th>
+                  <th className="text-left py-2 pr-3 w-36">Đơn giá (₫/kg)</th>
+                  <th className="text-right py-2 w-32">Thành tiền</th>
+                  <th className="w-8" />
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {items.map((row) => (
+                  <tr key={row._key}>
+                    <td className="py-1.5 pr-3">
+                      <Select value={row.material_id || ''} onChange={(e) => updateRow(row._key, 'material_id', Number(e.target.value))}>
+                        <option value="">-- Chọn --</option>
+                        {materials.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+                      </Select>
+                    </td>
+                    <td className="py-1.5 pr-3">
+                      <Input type="number" step="0.001" min="0" value={row.weight || ''} onChange={(e) => updateRow(row._key, 'weight', e.target.value)} placeholder="0" />
+                    </td>
+                    <td className="py-1.5 pr-3">
+                      <Input type="number" step="1" min="0" value={row.price_per_unit || ''} onChange={(e) => updateRow(row._key, 'price_per_unit', e.target.value)} placeholder="0" />
+                    </td>
+                    <td className="py-1.5 text-right font-medium text-gray-700">
+                      {new Intl.NumberFormat('vi-VN').format((row.weight || 0) * (row.price_per_unit || 0))} ₫
+                    </td>
+                    <td className="py-1.5 pl-2">
+                      <Button variant="ghost" size="sm" type="button" className="text-red-400" onClick={() => removeRow(row._key)} disabled={items.length === 1}>
+                        <Trash2 size={14} />
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* ── Mobile stacked cards ── */}
+          <div className="md:hidden space-y-3">
+            {items.map((row, idx) => (
+              <div key={row._key} className="border border-gray-200 rounded-xl p-3 space-y-2 bg-gray-50/50">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-gray-500">Dòng {idx + 1}</span>
+                  <Button variant="ghost" size="sm" type="button" className="text-red-400 -mr-1"
+                    onClick={() => removeRow(row._key)} disabled={items.length === 1}>
+                    <Trash2 size={14} />
+                  </Button>
+                </div>
+                <Select value={row.material_id || ''} onChange={(e) => updateRow(row._key, 'material_id', Number(e.target.value))}>
+                  <option value="">-- Chọn vật liệu --</option>
+                  {materials.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+                </Select>
+                <div className="grid grid-cols-2 gap-2">
+                  <Input label="Cân nặng (kg)" type="number" step="0.001" min="0"
+                    value={row.weight || ''} onChange={(e) => updateRow(row._key, 'weight', e.target.value)} placeholder="0" />
+                  <Input label="Đơn giá (₫/kg)" type="number" step="1" min="0"
+                    value={row.price_per_unit || ''} onChange={(e) => updateRow(row._key, 'price_per_unit', e.target.value)} placeholder="0" />
+                </div>
+                <div className="text-right text-sm font-semibold text-emerald-700">
+                  {new Intl.NumberFormat('vi-VN').format((row.weight || 0) * (row.price_per_unit || 0))} ₫
+                </div>
+              </div>
+            ))}
+          </div>
 
           <div className="flex items-center justify-between mt-4 pt-4 border-t">
             <Button variant="secondary" size="sm" type="button" onClick={addRow}><Plus size={14} /> Thêm dòng</Button>
@@ -171,7 +202,7 @@ export default function NewPurchasePage() {
           </div>
         </Card>
 
-        <div className="flex justify-end gap-3">
+        <div className="flex justify-end gap-3 pb-2">
           <Link href="/purchases"><Button variant="secondary" type="button">Huỷ</Button></Link>
           <Button type="submit" loading={mutation.isPending}>Lưu đơn mua</Button>
         </div>

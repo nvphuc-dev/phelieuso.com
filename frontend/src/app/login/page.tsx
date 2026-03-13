@@ -44,11 +44,11 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-emerald-600">♻ RWM</h1>
-          <p className="text-gray-500 mt-1">Quản Lý Kho Ve Chai</p>
+          <p className="text-gray-500 mt-1 font-bold">Quản Lý Kho Ve Chai</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-lg p-8 space-y-5">
-          <h2 className="text-xl font-semibold text-gray-800">Đăng nhập</h2>
+        <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-lg md:p-8 p-4 space-y-5">
+          <h2 className="text-xl font-semibold text-gray-800 text-center">Đăng Nhập</h2>
 
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-lg">
